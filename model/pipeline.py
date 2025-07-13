@@ -54,7 +54,8 @@ class Step(Node):
             msg = self.end_message(res, ctx)
             if self.mq:
                 self.mq.push(Message(msg))
-        # print(f"[Step] Finished: {self.name}")
+        if log_step:
+            print(f"[Step] Finished: {self.name}")
         return {**ctx, self.id: res}
 
 

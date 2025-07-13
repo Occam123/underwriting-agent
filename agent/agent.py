@@ -9,9 +9,14 @@ from helpers import read_system_prompt
 from model.schemas.Properties import Properties
 from model.messageQueue.MessageQueue import MessageQueue, Message
 from model.schemas.Basic import ListOfStrings, StringValue
-from helpers import json_dump
+from model.schemas.ISRDates import ISRDates
+from model.schemas.IndustryType import IndustryType
+from model.schemas.MinimalInsuranceSubmissionProperty import MinimalInsuranceSubmissionProperty
+from helpers import json_dump, string_to_datetime
 from exceptions import StopExecution
 from model.messageQueue.instance import message_queue
+
+from agent.clean_properties import clean_properties
 
 from service.CaseService import case_service
 from service.LogService import log_service
@@ -260,26 +265,345 @@ def create_new_submission_step():
     )
 
 
-def gen_id_properties_pipeline(email: Email):
+def find_submission_wide_information(email_dump: str) -> dict:
+    result = llm.chat(
+        message=f"============= Context ============= \n{email_dump}",
+        system_message=read_system_prompt("extract_isr_dates.md"),
+        model=Model.gpt_4_1,
+        response_format=ISRDates
+    )
+    result = result.model_dump()
+    submission_data = {
+        "quotation_date": result["quotation_date"]["date"]["value"],
+        "inception_date": result["inception_date"]["date"]["value"],
+    }
+    if submission_data["quotation_date"]:
+        submission_data["quotation_date"] = string_to_datetime(
+            submission_data["quotation_date"])
+    else:
+        submission_data["quotation_date"] = None
+
+    if submission_data["inception_date"]:
+        submission_data["inception_date"] = string_to_datetime(
+            submission_data["inception_date"])
+    else:
+        submission_data["inception_date"] = None
+
+    return submission_data
+
+
+def find_submission_wide_information_step(email: Email) -> Step:
+    def start_message(_):
+        return (
+            "I am gathering all submission-wide details from the email and any attachments."
+        )
+
+    def end_message(step_result, _):
+        info = step_result.get("submission_info", {})
+        if not info:
+            return "I did not find any submission-wide information in the email or attachments."
+        lines = "\n".join(f"- {key}: {value}" for key, value in info.items())
+        return f"I extracted the following submission-wide details:\n{lines}"
+
+    return Step(
+        id="find_submission_wide_information_step",
+        name="Find Submission-Wide Information",
+        function=lambda _: {
+            "submission_info": find_submission_wide_information(email.dump())
+        },
+        start_message=start_message,
+        end_message=end_message,
+        message_queue=message_queue
+    )
+
+
+def determine_industry_type(context: str) -> dict:
+    result = llm.chat(
+        message=f"================== Context ==================\n{context}",
+        system_message=read_system_prompt("determine_industry_type.md"),
+        response_format=IndustryType,
+        model=Model.o4_mini,
+        reasoning={
+            "effort": "medium",
+            "summary": "detailed"
+        }
+    )
+    return {
+        "result": result["result"].model_dump() if result["result"] else None,
+        "summary": result.get("summary")
+    }
+
+
+def extract_structured_data(context: str) -> dict:
+    result = llm.chat(
+        message=context,
+        system_message=read_system_prompt("extract_structured_data.md"),
+        model=Model.gpt_4_1,
+        response_format=MinimalInsuranceSubmissionProperty
+    )
+    return result.model_dump()
+
+
+def extract_structured_date_per_property(relevant_properties: List[dict], email_dump: str) -> dict:
+    structured_data_per_property = {}
+
+    for property in relevant_properties:
+        property_name = property['name']
+        property_description = property['description']
+
+        property_context = f'Property name: "{property_name}"\nProperty description: "{property_description}"'
+        context = f"============ Target property ============\n{property_context}\n\n============ Context ============\n{email_dump}"
+
+        structured_data = extract_structured_data(context)
+        structured_data_per_property[property_name] = structured_data
+
+        property_description = structured_data["property_description"]["value"]
+        business_description = structured_data["business_description"]["value"]
+
+        # TODO: improve
+        context = f'================== Context ==================\nProperty name: "{property_name}"\nProperty description: "{property_description}"\nBusiness description: {business_description}'
+        result = determine_industry_type(context)
+        industry_type = result["result"]
+        structured_data_per_property[property_name]["industry_type"] = industry_type
+
+    return structured_data_per_property
+
+
+def extract_structured_data_per_property_step(email: Email) -> Step:
+    def start_message(_):
+        return "I am extracting detailed structured data for each relevant property."
+
+    def end_message(step_result, _):
+        data_map = step_result.get("structured_data_per_property", {})
+        if not data_map:
+            return "I did not extract any structured data for the properties."
+        entries = []
+        for prop, data in data_map.items():
+            serialized = json_dump(data)
+            entries.append(f"{prop}:\n{serialized}")
+        joined = "\n\n".join(entries)
+        return f"I have extracted structured data for each property:\n\n{joined}"
+
+    return Step(
+        id="extract_structured_data_per_property_step",
+        name="Extract Structured Data Per Property",
+        function=lambda step_ctx: {
+            "structured_data_per_property": extract_structured_date_per_property(
+                step_ctx["find_relevant_properties_step"]["properties"], email.dump())
+        },
+        start_message=start_message,
+        end_message=end_message,
+        message_queue=message_queue
+    )
+
+
+def aggregate_data_step() -> Step:
+    def start_message(_):
+        return "I am aggregating submission-wide information with structured data for each property."
+
+    def end_message(step_result, _):
+        submission_info = step_result.get("submission_info", {})
+        property_data = step_result.get("structured_data_per_property", {})
+
+        if not submission_info and not property_data:
+            return "No data was available to aggregate."
+
+        parts = []
+
+        if submission_info:
+            parts.append("Submission-wide information:")
+            for key, value in submission_info.items():
+                parts.append(f"- {key}: {value}")
+
+        if property_data:
+            parts.append("\nStructured data per property:")
+            for prop, data in property_data.items():
+                parts.append(f"{prop}:\n{json_dump(data)}")
+
+        joined = "\n".join(parts)
+        return f"Aggregation complete. Combined data:\n{joined}"
+
+    return Step(
+        id="aggregate_data_step",
+        name="Aggregate Data",
+        function=lambda step_ctx: {
+            "submission_info": step_ctx["find_submission_wide_information_step"]["submission_info"],
+            "structured_data_per_property": step_ctx["extract_structured_data_per_property_step"]["structured_data_per_property"],
+        },
+        start_message=start_message,
+        end_message=end_message,
+        message_queue=message_queue
+    )
+
+
+def clean_data_step() -> Step:
+    def start_message(_):
+        return (
+            "I am cleaning and normalizing the submission-wide information "
+            "and structured data for each property."
+        )
+
+    def end_message(step_result, _):
+        cleaned_props = step_result.get("structured_data_per_property", {})
+        if not cleaned_props:
+            return "No property data required cleaning or normalization."
+        count = len(cleaned_props)
+        if count == 1:
+            prop_name = next(iter(cleaned_props))
+            return (
+                f"Cleaned and normalized data for 1 property: {prop_name}."
+            )
+        prop_list = "; ".join(cleaned_props.keys())
+        return (
+            f"Cleaned and normalized data for {count} properties: {prop_list}."
+        )
+
+    return Step(
+        id="clean_data_step",
+        name="Clean Data",
+        function=lambda ctx: {
+            "submission_info": ctx["find_submission_wide_information_step"]["submission_info"],
+            "structured_data_per_property": clean_properties(
+                relevant_properties=ctx["find_relevant_properties_step"]["properties"],
+                structured_data_per_property=ctx["extract_structured_data_per_property_step"]["structured_data_per_property"],
+            )
+        },
+        # start_message=start_message,
+        # end_message=end_message,
+        message_queue=message_queue
+    )
+
+
+with open(f"./data/risk_matrix.json", "r") as f:
+    risk_matrix = json.load(f)
+
+
+def apply_appetite_matrix(property: dict, risk_matrix: dict) -> dict:
+    industry_type = property["industry_type"]
+
+    main_category = industry_type["main_category"]
+    sub_category = industry_type["sub_category"]
+
+    established_and_financially_stable = property["established_and_financially_stable"]["value"]
+    purpose_built_premises = property["purpose_built_premises"]["value"]
+    sprinkler_protected = property["fire_protection"]["sprinklers"]["value"]
+    proactively_risk_managed_and_tested_BCP = property[
+        "proactively_risk_managed_and_tested_BCP"]["value"]
+    engaged_in_the_legal_and_regulatory_landscape_of_their_markets = property[
+        "engaged_in_the_legal_and_regulatory_landscape_of_their_markets"]["value"]
+
+    risk_values = [
+        established_and_financially_stable,
+        purpose_built_premises,
+        sprinkler_protected,
+        proactively_risk_managed_and_tested_BCP,
+        engaged_in_the_legal_and_regulatory_landscape_of_their_markets
+    ]
+
+    risk_values = [e if e is not None else False for e in risk_values]
+
+    required_criteria_idx = risk_matrix[main_category][sub_category]
+    minimum_criteria_met = True
+    missing_categories = []
+    for i in required_criteria_idx:
+        if risk_values[i] == False:
+            minimum_criteria_met = False
+            missing_categories.append(i)
+
+    return {
+        "missing_categories": missing_categories,
+        "minimum_criteria_met": minimum_criteria_met
+    }
+
+
+def apply_appetite_matrix_to_all_properties(properties: dict, risk_matrix: dict) -> dict:
+    result = {
+        "in_appetite_properties": [],
+        "out_of_appetite_properties": []
+    }
+    for property_name, property_data in properties.items():
+        appetite_result = apply_appetite_matrix(property_data, risk_matrix)
+        if appetite_result["minimum_criteria_met"]:
+            result["in_appetite_properties"].append({
+                "name": property_name,
+            })
+        else:
+            result["out_of_appetite_properties"].append({
+                "name": property_name,
+                "reason": appetite_result["missing_categories"]
+            })
+
+    return result
+
+
+def apply_appetite_matrix_step() -> Step:
+    def start_message(_):
+        return (
+            "I am evaluating each property against Zurich’s appetite matrix and underwriting rules."
+        )
+
+    def end_message(step_result, _):
+        evaluation = step_result.get("appetite_evaluation", {})
+        in_appetite = evaluation.get("in_appetite_properties", [])
+        out_of_appetite = evaluation.get("out_of_appetite_properties", [])
+
+        if not in_appetite and not out_of_appetite:
+            return "No appetite evaluation results were produced."
+
+        parts = []
+        if in_appetite:
+            names = ", ".join(item["name"] for item in in_appetite)
+            parts.append(f"Properties within appetite: {names}.")
+        if out_of_appetite:
+            details = "; ".join(
+                f"{item['name']} (missing criteria indices: {item['reason']})"
+                for item in out_of_appetite
+            )
+            parts.append(f"Properties outside appetite: {details}.")
+
+        joined = "\n".join(parts)
+        return f"Appetite matrix evaluation complete:\n{joined}"
+
+    return Step(
+        id="apply_appetite_matrix_step",
+        name="Apply Appetite Matrix Step",
+        function=lambda ctx: {
+            "appetite_evaluation": apply_appetite_matrix_to_all_properties(
+                properties=ctx["clean_data_step"]["structured_data_per_property"],
+                risk_matrix=risk_matrix
+            )
+        },
+        start_message=start_message,
+        end_message=end_message,
+        message_queue=message_queue
+    )
+
+
+def get_context_pipeline(email: Email):
     return Sequence([
-        find_customer_step(email),
-        # InspectNode(),
-        AbortIf(
-            cond=lambda step_ctx: step_ctx["find_customer_step"]["customer_name"] is None,
-            message="I could not identify a customer. Please provide more information about the intended customer and resend your request."
-        ),
-        get_customer_context_step(),
-        find_properties_step(email),
-        AbortIf(
-            cond=lambda step_ctx: not step_ctx["find_properties_step"]["properties"],
-            message="No properties were found in the email or its attachments."
-        ),
-        find_relevant_properties_step(email),
-        AbortIf(
-            cond=lambda step_ctx: not step_ctx["find_relevant_properties_step"]["properties"],
-            message="No relevant properties could be identified for this email."
-        ),
-        create_new_submission_step()
+        # find_customer_step(email),
+        # AbortIf(
+        #     cond=lambda step_ctx: step_ctx["find_customer_step"]["customer_name"] is None,
+        #     message="I could not identify a customer. Please provide more information about the intended customer and resend your request."
+        # ),
+        # get_customer_context_step(),
+        # find_properties_step(email),
+        # AbortIf(
+        #     cond=lambda step_ctx: not step_ctx["find_properties_step"]["properties"],
+        #     message="No properties were found in the email or its attachments."
+        # ),
+        # find_relevant_properties_step(email),
+        # AbortIf(
+        #     cond=lambda step_ctx: not step_ctx["find_relevant_properties_step"]["properties"],
+        #     message="No relevant properties could be identified for this email."
+        # ),
+        # create_new_submission_step(),
+        # find_submission_wide_information_step(email),
+        # extract_structured_data_per_property_step(email),
+        # aggregate_data_step(),
+        clean_data_step(),
+        apply_appetite_matrix_step(),
+        InspectNode()
     ])
 
 
@@ -313,12 +637,335 @@ context = {
 
 
 async def run_agent(email: Email) -> None:
-    id_properties_pipeline = gen_id_properties_pipeline(email)
-    step_ctx = {}
+    context_pipeline = get_context_pipeline(email)
+    step_ctx = {
+        "find_customer_step": {
+            "customer_name": "Alfa Pty Ltd"
+        },
+        "get_customer_context_step": {
+            "new": True,
+            "customer_name": "Alfa Pty Ltd",
+            "customer_ctx": {
+                "submissions": [
+                    {
+                        "email_chain": [],
+                        "submission_info": {},
+                        "properties": {
+                            "New Crematorium and Memorial Gardens facility in Thornlands": {}
+                        }
+                    }
+                ]
+            }
+        },
+        "find_properties_step": {
+            "properties": [
+                {
+                    "location_id": 1,
+                    "name": "[LOCATION_ADDRESS_STREET_3], Geebung Q [LOCATION_ZIP_3]",
+                    "name_insured": "[ORGANIZATION_1] T/A [URL_1] & [ORGANIZATION_2] & [ORGANIZATION_3] & Executive [ORGANIZATION_4] & [ORGANIZATION_5] Funerals & [ORGANIZATION_6], [ORGANIZATION_7], [ORGANIZATION_8], [ORGANIZATION_9] and [ORGANIZATION_10] [ORGANIZATION_11], [ORGANIZATION_12], [NAME_1], [NAME_2] & [NAME_3] and (a) subsidiary companies, organisations and other associated companies as defined under Section 50AAA of the Corporations Act 2001 (Commonwealth), and (b) social and sports clubs *including the committees and officers from time to time of unincorporated bodies) and the trustees of the Insured's superannuation and pension funds and welfare organisations, and (c) all organisations and other entities to whom (whether mortgagees, lessors, joint ventures or other parties with a legal or equitable interest in the Property Insured), the named Insured has a responsibility to maintain insurance; all for their respective interests, rights and liabilities and to the extent that they are not more specifically insured.",
+                    "description": "Year Built: 1997. External walls: Concrete. Roof: Metal. Floor: Concrete. Site Description: [ORGANIZATION_23]. Cremator: No. Building Floor Area: Ground Level (Front) \u2013 Offices 288 m2 approximately [LOCATION_ADDRESS_STREET_4] (Front) \u2013 Offices 288 m2 approximately Ground Level (Rear) \u2013 High Bay Warehouse - 674 m2 approximately. Number of levels: two (2) storey Office building with single level a high bay (6.5 metre) warehouse connected at the rear. Cold Room 1: Yes 30sqm. Storage Height: 300. Storage Packaging: 100. EPS%: 10. Internal Insulation: Yes. Fire Protection: Fire hose and extinguishers. Security: Deadlocks, Window security, CCTV, Back to Base Alarm to [ORGANIZATION_24], Security Guard. Buildings sum insured: 5,464,800. Contents: 607,533. Total: 6,072,333."
+                },
+                {
+                    "location_id": 2,
+                    "name": "[LOCATION_ADDRESS_STREET_5], Geebung Q [LOCATION_ZIP_3]",
+                    "name_insured": "[ORGANIZATION_1] T/A [URL_1] & [ORGANIZATION_2] & [ORGANIZATION_3] & Executive [ORGANIZATION_4] & [ORGANIZATION_5] Funerals & [ORGANIZATION_6], [ORGANIZATION_7], [ORGANIZATION_8], [ORGANIZATION_9] and [ORGANIZATION_10] [ORGANIZATION_11], [ORGANIZATION_12], [NAME_1], [NAME_2] & [NAME_3] and (a) subsidiary companies, organisations and other associated companies as defined under Section 50AAA of the Corporations Act 2001 (Commonwealth), and (b) social and sports clubs *including the committees and officers from time to time of unincorporated bodies) and the trustees of the Insured's superannuation and pension funds and welfare organisations, and (c) all organisations and other entities to whom (whether mortgagees, lessors, joint ventures or other parties with a legal or equitable interest in the Property Insured), the named Insured has a responsibility to maintain insurance; all for their respective interests, rights and liabilities and to the extent that they are not more specifically insured.",
+                    "description": "Year Built: 2000. External walls: Concrete. Roof: Metal. Floor: Concrete. Site Description: Garage. Cremator: No. Building Floor Area: Approx 100sqm. Number of levels: Single. Cold Room 1: No. Storage Height: 100. Storage Packaging: 200. EPS%: 6. Internal Insulation: No. Fire Protection: Extinguishers. Buildings sum insured: 0. Contents: 5,000. Total: 5,000."
+                },
+                {
+                    "location_id": 3,
+                    "name": "[LOCATION_ADDRESS_STREET_6], Deception Bay Q [LOCATION_ZIP_4]",
+                    "name_insured": "[ORGANIZATION_1] T/A [URL_1] & [ORGANIZATION_2] & [ORGANIZATION_3] & Executive [ORGANIZATION_4] & [ORGANIZATION_5] Funerals & [ORGANIZATION_6], [ORGANIZATION_7], [ORGANIZATION_8], [ORGANIZATION_9] and [ORGANIZATION_10] [ORGANIZATION_11], [ORGANIZATION_12], [NAME_1], [NAME_2] & [NAME_3] and (a) subsidiary companies, organisations and other associated companies as defined under Section 50AAA of the Corporations Act 2001 (Commonwealth), and (b) social and sports clubs *including the committees and officers from time to time of unincorporated bodies) and the trustees of the Insured's superannuation and pension funds and welfare organisations, and (c) all organisations and other entities to whom (whether mortgagees, lessors, joint ventures or other parties with a legal or equitable interest in the Property Insured), the named Insured has a responsibility to maintain insurance; all for their respective interests, rights and liabilities and to the extent that they are not more specifically insured.",
+                    "description": "Year Built: 1990. External walls: [NAME_GIVEN_2]rick. Roof: Metal. Floor: Concrete. Site Description: Crematorium and Memorial Gardens. Cremator: Yes. Building Floor Area: Approx 488sqm. Number of levels: Single. Cold Room 1: Yes 9 Sqm. Storage Height: 300. Storage Packaging: 100. EPS%: 7. Internal Insulation: No. Fire Protection: Fire hose and extinguishers. Security: Deadlocks, Ram raid barriers, CCTV, Back to Base Alarm. Buildings sum insured: 4,989,600. Contents: 613,319. Total: 5,602,919."
+                },
+                {
+                    "location_id": 4,
+                    "name": "[LOCATION_ADDRESS_STREET_7], Northgate Q [LOCATION_ZIP_5]",
+                    "name_insured": "[ORGANIZATION_1] T/A [URL_1] & [ORGANIZATION_2] & [ORGANIZATION_3] & Executive [ORGANIZATION_4] & [ORGANIZATION_5] Funerals & [ORGANIZATION_6], [ORGANIZATION_7], [ORGANIZATION_8], [ORGANIZATION_9] and [ORGANIZATION_10] [ORGANIZATION_11], [ORGANIZATION_12], [NAME_1], [NAME_2] & [NAME_3] and (a) subsidiary companies, organisations and other associated companies as defined under Section 50AAA of the Corporations Act 2001 (Commonwealth), and (b) social and sports clubs *including the committees and officers from time to time of unincorporated bodies) and the trustees of the Insured's superannuation and pension funds and welfare organisations, and (c) all organisations and other entities to whom (whether mortgagees, lessors, joint ventures or other parties with a legal or equitable interest in the Property Insured), the named Insured has a responsibility to maintain insurance; all for their respective interests, rights and liabilities and to the extent that they are not more specifically insured.",
+                    "description": "Year Built: 1975. External walls: Metal. Roof: Metal. Floor: Concrete. Site Description: Garage. Cremator: No. Building Floor Area: 800sqm. Number of levels: Single. Cold Room 1: No. Storage Height: 100. Storage Packaging: 200. EPS%: 8. Internal Insulation: No. Fire Protection: Extinguishers. Buildings sum insured: 1,133,000. Contents: 21,400. Total: 1,154,400."
+                },
+                {
+                    "location_id": 5,
+                    "name": "[LOCATION_ADDRESS_STREET_8], Browns Plains Q [LOCATION_ZIP_6]",
+                    "name_insured": "[ORGANIZATION_1] T/A [URL_1] & [ORGANIZATION_2] & [ORGANIZATION_3] & Executive [ORGANIZATION_4] & [ORGANIZATION_5] Funerals & [ORGANIZATION_6], [ORGANIZATION_7], [ORGANIZATION_8], [ORGANIZATION_9] and [ORGANIZATION_10] [ORGANIZATION_11], [ORGANIZATION_12], [NAME_1], [NAME_2] & [NAME_3] and (a) subsidiary companies, organisations and other associated companies as defined under Section 50AAA of the Corporations Act 2001 (Commonwealth), and (b) social and sports clubs *including the committees and officers from time to time of unincorporated bodies) and the trustees of the Insured's superannuation and pension funds and welfare organisations, and (c) all organisations and other entities to whom (whether mortgagees, lessors, joint ventures or other parties with a legal or equitable interest in the Property Insured), the named Insured has a responsibility to maintain insurance; all for their respective interests, rights and liabilities and to the extent that they are not more specifically insured.",
+                    "description": "Year Built: 1990. External walls: Concrete. Roof: Metal. Floor: Concrete. Site Description: Office. Cremator: No. Building Floor Area: 40sqm. Number of levels: Single. Cold Room 1: No. Storage Height: 300. Storage Packaging: 100. EPS%: 18. Internal Insulation: No. Fire Protection: Fire hose and extinguishers. Security: Monitored back to base security alarm. Buildings sum insured: 0. Contents: 26,616. Total: 26,616."
+                },
+                {
+                    "location_id": 6,
+                    "name": "[LOCATION_ADDRESS_STREET_9], Thornlands Q [LOCATION_ZIP_7]",
+                    "name_insured": "[ORGANIZATION_1] T/A [URL_1] & [ORGANIZATION_2] & [ORGANIZATION_3] & Executive [ORGANIZATION_4] & [ORGANIZATION_5] Funerals & [ORGANIZATION_6], [ORGANIZATION_7], [ORGANIZATION_8], [ORGANIZATION_9] and [ORGANIZATION_10] [ORGANIZATION_11], [ORGANIZATION_12], [NAME_1], [NAME_2] & [NAME_3] and (a) subsidiary companies, organisations and other associated companies as defined under Section 50AAA of the Corporations Act 2001 (Commonwealth), and (b) social and sports clubs *including the committees and officers from time to time of unincorporated bodies) and the trustees of the Insured's superannuation and pension funds and welfare organisations, and (c) all organisations and other entities to whom (whether mortgagees, lessors, joint ventures or other parties with a legal or equitable interest in the Property Insured), the named Insured has a responsibility to maintain insurance; all for their respective interests, rights and liabilities and to the extent that they are not more specifically insured.",
+                    "description": "Year Built: 1975. External walls: Timber. Roof: Metal. Floor: Timber. Site Description: Rental House. Building Floor Area: Land 26 Acres. Storage Height: 300. Storage Packaging: 100. EPS%: 10. Internal Insulation: No. Buildings sum insured: 300,000. Contents: not declared. Total: 300,000."
+                },
+                {
+                    "location_id": 7,
+                    "name": "New Crematorium and Memorial Gardens facility in Thornlands",
+                    "name_insured": "[ORGANIZATION_1] T/A [URL_1] & [ORGANIZATION_2] & [ORGANIZATION_3] & Executive [ORGANIZATION_4] & [ORGANIZATION_5] Funerals & [ORGANIZATION_6], [ORGANIZATION_7], [ORGANIZATION_8], [ORGANIZATION_9] and [ORGANIZATION_10] [ORGANIZATION_11], [ORGANIZATION_12], [NAME_1], [NAME_2] & [NAME_3] and (a) subsidiary companies, organisations and other associated companies as defined under Section 50AAA of the Corporations Act 2001 (Commonwealth), and (b) social and sports clubs *including the committees and officers from time to time of unincorporated bodies) and the trustees of the Insured's superannuation and pension funds and welfare organisations, and (c) all organisations and other entities to whom (whether mortgagees, lessors, joint ventures or other parties with a legal or equitable interest in the Property Insured), the named Insured has a responsibility to maintain insurance; all for their respective interests, rights and liabilities and to the extent that they are not more specifically insured.",
+                    "description": "New Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time. Asset value approximately $10 million."
+                }
+            ]
+        },
+        "find_relevant_properties_step": {
+            "properties": [
+                {
+                    "location_id": 7,
+                    "name": "New Crematorium and Memorial Gardens facility in Thornlands",
+                    "name_insured": "[ORGANIZATION_1] T/A [URL_1] & [ORGANIZATION_2] & [ORGANIZATION_3] & Executive [ORGANIZATION_4] & [ORGANIZATION_5] Funerals & [ORGANIZATION_6], [ORGANIZATION_7], [ORGANIZATION_8], [ORGANIZATION_9] and [ORGANIZATION_10] [ORGANIZATION_11], [ORGANIZATION_12], [NAME_1], [NAME_2] & [NAME_3] and (a) subsidiary companies, organisations and other associated companies as defined under Section 50AAA of the Corporations Act 2001 (Commonwealth), and (b) social and sports clubs *including the committees and officers from time to time of unincorporated bodies) and the trustees of the Insured's superannuation and pension funds and welfare organisations, and (c) all organisations and other entities to whom (whether mortgagees, lessors, joint ventures or other parties with a legal or equitable interest in the Property Insured), the named Insured has a responsibility to maintain insurance; all for their respective interests, rights and liabilities and to the extent that they are not more specifically insured.",
+                    "description": "New Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time. Asset value approximately $10 million."
+                }
+            ]
+        },
+        "create_new_properties_in_case_step": {
+            "new_properties": [
+                "New Crematorium and Memorial Gardens facility in Thornlands"
+            ]
+        },
+        "find_submission_wide_information_step": {
+            "submission_info": {
+                "quotation_date": "02/08/2024",
+                "inception_date": "15/08/2024"
+            }
+        },
+        "extract_structured_data_per_property_step": {
+            "structured_data_per_property": {
+                "New Crematorium and Memorial Gardens facility in Thornlands": {
+                    "total_declared_value": {
+                        "value": 10000000.0,
+                        "source": "There is a new Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time. This facility will have an asset value of approximately $10 million."
+                    },
+                    "address": {
+                        "street": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "number": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "postal_code": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "city": {
+                            "value": "Thornlands",
+                            "source": "New Crematorium and Memorial Gardens facility in Thornlands"
+                        },
+                        "province": {
+                            "value": "Queensland",
+                            "source": "South Brisbane, Queensland, [LOCATION_ZIP_1]"
+                        },
+                        "country": {
+                            "value": "Australia",
+                            "source": "any other situation/premises in Australia owned or occupied by the Insured for the purposes of the Business"
+                        },
+                        "unit": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "property_name": {
+                            "value": "New Crematorium and Memorial Gardens facility in Thornlands",
+                            "source": "Property name: \"New Crematorium and Memorial Gardens facility in Thornlands\""
+                        }
+                    },
+                    "business_description": {
+                        "value": "Funeral Directors, Property Owners and any activity incidental thereto.",
+                        "source": "Principally Funeral Directors, Property Owners and any activity incidental thereto."
+                    },
+                    "property_description": {
+                        "value": "New Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time.",
+                        "source": "New Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time."
+                    },
+                    "construction_materials": {
+                        "wood": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "steel": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "brick": {
+                            "value": None,
+                            "source": ""
+                        }
+                    },
+                    "location_risk": {
+                        "flood_zone": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "earthquake_prone_area": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "windstorm_area": {
+                            "value": None,
+                            "source": ""
+                        }
+                    },
+                    "fire_protection": {
+                        "sprinklers": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "alarms": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "fire_department_proximity": {
+                            "value": None,
+                            "source": ""
+                        }
+                    },
+                    "purpose_built_premises": {
+                        "value": True,
+                        "source": "New Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time."
+                    },
+                    "established_and_financially_stable": {
+                        "value": None,
+                        "source": ""
+                    },
+                    "proactively_risk_managed_and_tested_BCP": {
+                        "value": None,
+                        "source": ""
+                    },
+                    "engaged_in_the_legal_and_regulatory_landscape_of_their_markets": {
+                        "value": None,
+                        "source": ""
+                    },
+                    "industry_type": {
+                        "main_category": "real_estate_and_business_services",
+                        "sub_category": "clerical_technical_and_business_services"
+                    }
+                }
+            }
+        },
+        "aggregate_data_step": {
+            "submission_info": {
+                "quotation_date": "02/08/2024",
+                "inception_date": "15/08/2024"
+            },
+            "structured_data_per_property": {
+                "New Crematorium and Memorial Gardens facility in Thornlands": {
+                    "total_declared_value": {
+                        "value": 10000000.0,
+                        "source": "There is a new Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time. This facility will have an asset value of approximately $10 million."
+                    },
+                    "address": {
+                        "street": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "number": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "postal_code": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "city": {
+                            "value": "Thornlands",
+                            "source": "New Crematorium and Memorial Gardens facility in Thornlands"
+                        },
+                        "province": {
+                            "value": "Queensland",
+                            "source": "South Brisbane, Queensland, [LOCATION_ZIP_1]"
+                        },
+                        "country": {
+                            "value": "Australia",
+                            "source": "any other situation/premises in Australia owned or occupied by the Insured for the purposes of the Business"
+                        },
+                        "unit": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "property_name": {
+                            "value": "New Crematorium and Memorial Gardens facility in Thornlands",
+                            "source": "Property name: \"New Crematorium and Memorial Gardens facility in Thornlands\""
+                        }
+                    },
+                    "business_description": {
+                        "value": "Funeral Directors, Property Owners and any activity incidental thereto.",
+                        "source": "Principally Funeral Directors, Property Owners and any activity incidental thereto."
+                    },
+                    "property_description": {
+                        "value": "New Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time.",
+                        "source": "New Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time."
+                    },
+                    "construction_materials": {
+                        "wood": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "steel": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "brick": {
+                            "value": None,
+                            "source": ""
+                        }
+                    },
+                    "location_risk": {
+                        "flood_zone": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "earthquake_prone_area": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "windstorm_area": {
+                            "value": None,
+                            "source": ""
+                        }
+                    },
+                    "fire_protection": {
+                        "sprinklers": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "alarms": {
+                            "value": None,
+                            "source": ""
+                        },
+                        "fire_department_proximity": {
+                            "value": None,
+                            "source": ""
+                        }
+                    },
+                    "purpose_built_premises": {
+                        "value": True,
+                        "source": "New Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time."
+                    },
+                    "established_and_financially_stable": {
+                        "value": None,
+                        "source": ""
+                    },
+                    "proactively_risk_managed_and_tested_BCP": {
+                        "value": None,
+                        "source": ""
+                    },
+                    "engaged_in_the_legal_and_regulatory_landscape_of_their_markets": {
+                        "value": None,
+                        "source": ""
+                    },
+                    "industry_type": {
+                        "main_category": "real_estate_and_business_services",
+                        "sub_category": "clerical_technical_and_business_services"
+                    }
+                }
+            }
+        }
+    }
     try:
-        result = id_properties_pipeline.execute(step_ctx)
+        result = context_pipeline.execute(step_ctx)
+
+        # TODO: classify email: request, question, additional info
+        # execute the appropriate pipeline
+
         print(json.dumps(agent_ctx, indent=2))
         print("\n\n")
+
     except StopExecution as e:
         message_queue.push(Message(e.message))
     except Exception as e:
