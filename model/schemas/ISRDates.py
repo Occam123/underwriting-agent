@@ -1,22 +1,11 @@
-from typing import List
 from pydantic import BaseModel
 
 
 class Date(BaseModel):
     value: str
-    context: str
-
-
-class QuotationDate(BaseModel):
-    date: Date
-    reasoning_steps: List[str]
-
-
-class InceptionDate(BaseModel):
-    date: Date
-    reasoning_steps: List[str]
+    source: str
 
 
 class ISRDates(BaseModel):
-    quotation_date: QuotationDate
-    inception_date: InceptionDate
+    quotation_date: Date
+    inception_date: Date

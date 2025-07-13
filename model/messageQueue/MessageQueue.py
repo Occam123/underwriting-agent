@@ -43,15 +43,14 @@ class MessageQueue:
                 with self._lock:
                     if not self.queue:
                         break
-                    message = self.queue[-1]  # Process only the latest message
+                    # pop the oldest message
+                    message = self.queue.pop(0)
                 if self.callback:
                     if asyncio.iscoroutinefunction(self.callback):
-                        # If the callback is async
                         self._loop.run_until_complete(self.callback(message))
                     else:
-                        # If the callback is sync
                         self.callback(message)
-                break
+            # loop back and wait for the next new_message_event
 
     def set_callback(self, callback: Callable[[Message], None]):
         self.callback = callback

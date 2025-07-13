@@ -1,4 +1,4 @@
-from typing import Callable, Any, Dict, List, Optional
+from typing import Callable, Any, Dict, List, Optional, Union
 from helpers import json_dump
 from model.messageQueue.MessageQueue import MessageQueue, Message
 
@@ -77,17 +77,23 @@ class Sequence(Node):
 
 
 class AbortIf(Node):
-    def __init__(self, cond: Callable[[Dict[str, Any]], bool], message: str):
+    def __init__(
+        self,
+        cond: Callable[[Dict[str, Any]], bool],
+        message: Union[str, Callable[[Dict[str, Any]], str]],
+    ):
         self.cond = cond
         self.message = message
 
-    def execute(self, ctx):
+    def execute(self, ctx: Dict[str, Any]) -> Dict[str, Any]:
         if log_step:
             print(f"[AbortIf] Evaluating abort condition...")
         if self.cond(ctx):
+            # Decide if message is static or dynamic
+            msg = self.message(ctx) if callable(self.message) else self.message
             if log_step:
-                print(f"[AbortIf] Condition failed: {self.message}")
-            raise StopExecution(self.message, ctx)
+                print(f"[AbortIf] Condition failed: {msg}")
+            raise StopExecution(msg, ctx)
         if log_step:
             print(f"[AbortIf] Condition passed.")
         return ctx
