@@ -1,4 +1,5 @@
 from typing import Callable, Any, Dict, List, Optional
+from helpers import json_dump
 from model.messageQueue.MessageQueue import MessageQueue, Message
 
 # ==== Node Graph Classes ====
@@ -21,6 +22,9 @@ class Node:
         raise NotImplementedError
 
 
+log_step = False
+
+
 class Step(Node):
     def __init__(
         self,
@@ -39,14 +43,15 @@ class Step(Node):
         self.mq = message_queue
 
     def execute(self, ctx):
-        # print(f"[Step] Starting: {self.name}")
+        if log_step:
+            print(f"[Step] Starting: {self.name}")
         if self.start_message:
             msg = self.start_message(ctx)
             if self.mq:
                 self.mq.push(Message(msg))
         res = self.function(ctx)
         if self.end_message:
-            msg = self.end_message(res)
+            msg = self.end_message(res, ctx)
             if self.mq:
                 self.mq.push(Message(msg))
         # print(f"[Step] Finished: {self.name}")
@@ -58,12 +63,15 @@ class Sequence(Node):
         self.children = children
 
     def execute(self, ctx):
-        # print(f"[Sequence] Executing {len(self.children)} steps...")
+        if log_step:
+            print(f"[Sequence] Executing {len(self.children)} steps...")
         for i, child in enumerate(self.children):
-            # print(
-            #     f"[Sequence] Step {i+1}/{len(self.children)}: {getattr(child, 'name', child.__class__.__name__)}")
+            if log_step:
+                print(
+                    f"[Sequence] Step {i+1}/{len(self.children)}: {getattr(child, 'name', child.__class__.__name__)}")
             ctx = child.execute(ctx)
-        # print(f"[Sequence] Done.")
+        if log_step:
+            print(f"[Sequence] Done.")
         return ctx
 
 
@@ -73,9 +81,18 @@ class AbortIf(Node):
         self.message = message
 
     def execute(self, ctx):
-        # print(f"[AbortIf] Evaluating abort condition...")
-        if not self.cond(ctx):
-            # print(f"[AbortIf] Condition failed: {self.message}")
+        if log_step:
+            print(f"[AbortIf] Evaluating abort condition...")
+        if self.cond(ctx):
+            if log_step:
+                print(f"[AbortIf] Condition failed: {self.message}")
             raise StopExecution(self.message, ctx)
-        # print(f"[AbortIf] Condition passed.")
+        if log_step:
+            print(f"[AbortIf] Condition passed.")
+        return ctx
+
+
+class InspectNode(Node):
+    def execute(self, ctx):
+        print(json_dump(ctx))
         return ctx

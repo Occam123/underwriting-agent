@@ -3,6 +3,7 @@ from datetime import datetime
 import os
 import json
 import base64
+from traceback import print_exc
 
 from config.Envs import envs
 from model.Email import Email
@@ -84,6 +85,7 @@ def receive_email():
                                     previous_email_id = parts[-1]
                             break
             except Exception as e:
+                print_exc()
                 print("Error parsing headers:", e)
 
         # Convert timestamp to datetime
@@ -106,6 +108,8 @@ def receive_email():
         except Exception as e:
             print("Failed to process attachment")
             print(e)
+            print_exc()
+
 
         internal_rep_email = Email(
             id=message_id,
@@ -134,6 +138,7 @@ def receive_email():
     except Exception as e:
         print(f"Error processing email")
         print(e)
+        print_exc()
         return jsonify({"status": "error", "message": str(e)}), 200
 
 if __name__ == "__main__":
