@@ -4,7 +4,6 @@ from model.messageQueue.instance import message_queue
 from agent.AgentContext import agent_ctx
 
 from service.CustomerService import customer_service
-from agent.actions import init_customer
 from service.CustomerService import customer_service
 
 async def get_customer_context(step_ctx: Dict[str, Any]):
@@ -15,7 +14,10 @@ async def get_customer_context(step_ctx: Dict[str, Any]):
             "submissions": []
         }
         agent_ctx[customer_name] = default_ctx
-        customer = await customer_service.create_customer(customer_name)
+
+        customer = await customer_service.get_customer_by_name(customer_name)
+        if customer is None:
+            customer = await customer_service.create_customer(customer_name)
         customer_id = customer.id
         return {
             "new": True,

@@ -5,6 +5,7 @@ from database import get_supabase_client
 from model.Case import (
     Case, CaseStatus
 )
+from service.CustomerService import customer_service
 
 class CaseService:
     def __init__(self):
@@ -23,7 +24,7 @@ class CaseService:
             "customer_id": customer_id
 
         }
-        
+
         try:
             result = self.supabase.table("cases").insert(case_data).execute()
             return Case(**result.data[0])
@@ -34,7 +35,8 @@ class CaseService:
     async def get_case(self, case_id: str) -> Optional[Case]:
         """Get a case by ID"""
         try:
-            result = self.supabase.table("cases").select("*").eq("id", case_id).execute()
+            result = self.supabase.table("cases").select(
+                "*").eq("id", case_id).execute()
             if result.data:
                 return Case(**result.data[0])
             return None
@@ -52,7 +54,8 @@ class CaseService:
             update_data["agent_summary"] = agent_summary
 
         try:
-            result = self.supabase.table("cases").update(update_data).eq("id", case_id).execute()
+            result = self.supabase.table("cases").update(
+                update_data).eq("id", case_id).execute()
             return Case(**result.data[0])
         except Exception as e:
             print(f"❌ Error updating case status: {str(e)}")
@@ -78,5 +81,13 @@ class CaseService:
         except Exception as e:
             print(f"❌ Error listing cases: {str(e)}")
             raise
+
+    async def get_cases_by_customer_name(self, customer_name: str) -> List[Case]:
+        customer = await customer_service.get_customer_by_name(customer_name)
+        if not customer:
+            return []
+        customer_id = customer.id
+        return await self.list_cases(customer_id=customer_id)
+
 
 case_service = CaseService()

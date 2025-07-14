@@ -7,7 +7,13 @@ from service.CaseService import case_service
 from agent.AgentContext import agent_ctx
 
 
-async def create_new_submission(customer_id: str, customer_name: str, properties: List[dict]) -> None:
+async def create_new_submission(step_ctx) -> None:
+    global agent_ctx
+
+    customer_id = step_ctx["get_customer_context_step"]["customer_id"]
+    customer_name = step_ctx["find_customer_step"]["customer_name"]
+    properties = step_ctx["find_relevant_properties_step"]["properties"]
+
     existing_properties = []
     for submission in agent_ctx[customer_name]["submissions"]:
         submission_properties = submission["properties"]
@@ -18,28 +24,26 @@ async def create_new_submission(customer_id: str, customer_name: str, properties
         property_name for property_name in property_names if property_name not in existing_properties]
 
     if new_properties:
+        cases = await case_service.get_cases_by_customer_name(customer_name)
+        case_title = f"{customer_name}-{len(cases)+1}"
+        case_id = await case_service.create_case(title=case_title, customer_id=customer_id)
 
-        created_properties = []
-        case_id = await case_service.create_case(customer_name, customer_id)
-        for property_name in new_properties:
-            property = await property_service.create_building(
-                case_id=case_id,
-                name=property_name
-            )
-            created_properties.append(property)
 
         # create new submission for properties
         new_submission = {
             "email_chain": [],
             "submission_info": {},
             "properties": {
-                property.name: { "id": property.id } for property in created_properties
+                property_name: {
+                    "case_id": case_id
+                } for property_name in new_properties
             }
         }
         agent_ctx[customer_name]["submissions"].append(new_submission)
 
+
     return {
-        "new_properties": new_properties
+        "new_properties": new_properties,
     }
 
 
@@ -60,11 +64,7 @@ def create_new_submission_step():
     return Step(
         id="create_new_properties_in_case_step",
         name="Create Properties in Case Step",
-        function=lambda step_ctx: create_new_submission(
-            step_ctx["get_customer_context_step"]["customer_id"],
-            step_ctx["find_customer_step"]["customer_name"],
-            step_ctx["find_relevant_properties_step"]["properties"]
-        ),
+        function=create_new_submission,
         end_message=end_message,
         message_queue=message_queue
     )

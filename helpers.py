@@ -12,7 +12,8 @@ from config.Config import config
 
 
 def base_path() -> str:
-    return "/Users/wout/Documents/agent/underwriting-agent"
+    return "/Users/laurenswissels/Documents/Startup/code/agent-solution"
+
 
 
 def read_system_prompt(filename: str) -> str:

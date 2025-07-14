@@ -267,27 +267,27 @@ def get_context_pipeline(email: Email):
         create_new_submission_step(),
         find_submission_wide_information_step(email),
         extract_structured_data_per_property_step(email),
-        aggregate_data_step(),
-        clean_data_step(),
-        apply_appetite_matrix_step(),
-        check_quick_decline_rules_data_step(),
-        AbortIf(
-            cond=lambda step_ctx: len(
-                step_ctx["check_quick_decline_rules_data"]["missing_values"]) > 0,
-            message=lambda step_ctx: (
-                "Cannot evaluate quick-decline rules, for the following reasons: "
-                f"{', '.join(step_ctx['check_quick_decline_rules_data']['missing_values'])}. "
-                "Please provide these before underwriting can continue."
-            )
-        ),
-        apply_quick_decline_rules_step(),
-        AbortIf(
-            cond=lambda step_ctx: not step_ctx["find_relevant_properties_step"]["properties"],
-            message="No relevant properties could be identified for this email."
-        ),
-        assess_submission_for_underwriting_step(),
-        create_submission_quoting_step(),
-        write_final_message_step(email)
+        # aggregate_data_step(),
+        # clean_data_step(),
+        # apply_appetite_matrix_step(),
+        # check_quick_decline_rules_data_step(),
+        # AbortIf(
+        #     cond=lambda step_ctx: len(
+        #         step_ctx["check_quick_decline_rules_data"]["missing_values"]) > 0,
+        #     message=lambda step_ctx: (
+        #         "Cannot evaluate quick-decline rules, for the following reasons: "
+        #         f"{', '.join(step_ctx['check_quick_decline_rules_data']['missing_values'])}. "
+        #         "Please provide these before underwriting can continue."
+        #     )
+        # ),
+        # apply_quick_decline_rules_step(),
+        # AbortIf(
+        #     cond=lambda step_ctx: not step_ctx["find_relevant_properties_step"]["properties"],
+        #     message="No relevant properties could be identified for this email."
+        # ),
+        # assess_submission_for_underwriting_step(),
+        # create_submission_quoting_step(),
+        # write_final_message_step(email)
     ])
 
 
@@ -347,6 +347,11 @@ async def run_agent(email: Email) -> None:
     except Exception as e:
         print("Error whilst executing pipeline")
         print_exc()
+        print("================= step ctx ================= ")
+        print(json_dump(step_ctx))
+        print("\n\n")
+        print("================= agent ctx ================= ")
+        print(json_dump(agent_ctx))
 
     finally:
         pass

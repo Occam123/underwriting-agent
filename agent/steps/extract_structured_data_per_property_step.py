@@ -10,6 +10,7 @@ from model.schemas.MinimalInsuranceSubmissionProperty import MinimalInsuranceSub
 from model.schemas.IndustryType import IndustryType
 from service.PropertyService import property_service
 from helpers import json_dump
+from agent.AgentContext import agent_ctx
 
 
 def determine_industry_type(context: str) -> dict:
@@ -39,7 +40,31 @@ def extract_structured_data(context: str) -> dict:
     return result.model_dump()
 
 
-async def extract_structured_date_per_property(relevant_properties: List[dict], email_dump: str) -> dict:
+def find_case_id(customer_name: str, property_name: str) -> str:
+    """
+    Search all submissions for this customer, find the one that
+    contains `property_name`, and return its case_id.id
+    """
+    subs = agent_ctx[customer_name].get("submissions", [])
+    for submission in subs:
+        props = submission.get("properties", {})
+        if property_name in props:
+            case_obj = props[property_name].get("case_id")
+            # if case_obj is already a string, just return it
+            if isinstance(case_obj, str):
+                return case_obj
+            # otherwise assume dict with "id" key
+            return case_obj.id
+    raise KeyError(f"No case found for property '{property_name}'")
+
+
+async def extract_structured_date_per_property(step_ctx: dict, email_dump: str) -> dict:
+    global agent_ctx
+
+        # relevant_properties: List[dict], customer_name: str, email_dump: str) -> dict:
+    relevant_properties = step_ctx["find_relevant_properties_step"]["properties"]
+    customer_name=step_ctx["find_customer_step"]["customer_name"]
+    
     structured_data_per_property = {}
 
     for property in relevant_properties:
@@ -61,13 +86,16 @@ async def extract_structured_date_per_property(relevant_properties: List[dict], 
         industry_type = result["result"]
         structured_data_per_property[property_name]["industry_type"] = industry_type
 
-        building_id = property.id
+        # building_id = property.id
+        
+        print(json_dump(agent_ctx))
+        case_id = find_case_id(customer_name, property_name)
 
-        await property_service.update_building_data(
-            building_id=building_id,
+        await property_service.create_building(
+            case_id=case_id,
+            name=property_name,
             structured_data=structured_data
         )
-
 
     return structured_data_per_property
 
@@ -86,14 +114,28 @@ def extract_structured_data_per_property_step(email: Email) -> Step:
             entries.append(f"{prop}:\n{serialized}")
         joined = "\n\n".join(entries)
         return f"I have extracted structured data for each property:\n\n{joined}"
+    
+
+    async def worker(step_ctx: dict) -> dict:
+        # here we "integrate" the email_dump
+        result_map = await extract_structured_date_per_property(
+            step_ctx=step_ctx,
+            email_dump=email.dump()
+        )
+        return {"structured_data_per_property": result_map}
+
 
     return Step(
         id="extract_structured_data_per_property_step",
         name="Extract Structured Data Per Property",
-        function=lambda step_ctx: {
-            "structured_data_per_property": extract_structured_date_per_property(
-                step_ctx["find_relevant_properties_step"]["properties"], email.dump())
-        },
+        function=worker,
+        # function=lambda step_ctx: {
+        #     "structured_data_per_property": extract_structured_date_per_property(
+        #         relevant_properties=step_ctx["find_relevant_properties_step"]["properties"],
+        #         customer_name=step_ctx["find_customer_step"]["customer_name"],
+        #         email_dump=email.dump()
+        #     )
+        # },
         start_message=start_message,
         end_message=end_message,
         message_queue=message_queue
