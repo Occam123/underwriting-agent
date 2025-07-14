@@ -38,7 +38,7 @@ def find_properties_step(email: Email) -> Step:
         id="find_properties_step",
         name="Find All Properties",
         function=lambda _: {"properties": find_properties(email.dump())},
-        # start_message=start_message,
-        # end_message=end_message,
+        start_message=start_message,
+        end_message=end_message,
         message_queue=message_queue
     )

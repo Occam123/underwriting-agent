@@ -12,7 +12,7 @@ from config.Config import config
 
 
 def base_path() -> str:
-    return "/Users/laurenswissels/Documents/Startup/code/agent-solution"
+    return "/Users/wout/Documents/agent/underwriting-agent"
 
 
 def read_system_prompt(filename: str) -> str:

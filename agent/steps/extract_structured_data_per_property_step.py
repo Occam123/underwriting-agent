@@ -8,7 +8,7 @@ from model.schemas.Properties import Properties
 from model.messageQueue.instance import message_queue
 from model.schemas.MinimalInsuranceSubmissionProperty import MinimalInsuranceSubmissionProperty
 from model.schemas.IndustryType import IndustryType
-
+from service.PropertyService import property_service
 from helpers import json_dump
 
 
@@ -39,7 +39,7 @@ def extract_structured_data(context: str) -> dict:
     return result.model_dump()
 
 
-def extract_structured_date_per_property(relevant_properties: List[dict], email_dump: str) -> dict:
+async def extract_structured_date_per_property(relevant_properties: List[dict], email_dump: str) -> dict:
     structured_data_per_property = {}
 
     for property in relevant_properties:
@@ -60,6 +60,14 @@ def extract_structured_date_per_property(relevant_properties: List[dict], email_
         result = determine_industry_type(context)
         industry_type = result["result"]
         structured_data_per_property[property_name]["industry_type"] = industry_type
+
+        building_id = property.id
+
+        await property_service.update_building_data(
+            building_id=building_id,
+            structured_data=structured_data
+        )
+
 
     return structured_data_per_property
 
