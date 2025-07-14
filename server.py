@@ -4,6 +4,9 @@ import os
 import json
 import base64
 from traceback import print_exc
+import asyncio
+import time
+from flask_sock import Sock
 
 from config.Envs import envs
 from model.Email import Email
@@ -12,6 +15,7 @@ from model.EmailInbox import EmailInbox
 from agent.agent import run_agent
 
 app = Flask(__name__)
+sock = Sock(app)
 document_processor = DocumentProcessor()
 email_inbox = EmailInbox(callback=run_agent)
 
@@ -48,7 +52,7 @@ def read_email():
             saved_data = json.load(f)
         return saved_data
 
-@app.route("/email/receive", methods=["POST"])
+@app.route("/email/receive", methods=["GET"])
 def receive_email():
     try:
         # print("Received email")
@@ -141,7 +145,34 @@ def receive_email():
         print(f"Error processing email")
         print(e)
         print_exc()
-        return jsonify({"status": "error", "message": str(e)}), 200
+
+
+
+def get_status():
+        """Get current agent status"""
+        return {
+            "agent_id": "1",
+            "state": "idle",
+            "current_case_id": None,
+            "timestamp": datetime.now().isoformat()
+        }
+
+
+@sock.route("/ws/agent/status")
+def websocket_agent_status(websocket):
+    try:
+        while True:
+            # Send the current agent status every 2 seconds
+            if 'agent' in globals():
+                status = get_status()
+                websocket.send(json.dumps(status))
+            else:
+                websocket.send(json.dumps({"error": "Agent not initialized"}))
+            time.sleep(2)  # Adjust interval as needed
+    except Exception as e:
+        print(f"❌ WebSocket error: {e}")
+        print("🔌 WebSocket disconnected")
+
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=5001, debug=True)
