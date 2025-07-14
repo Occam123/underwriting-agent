@@ -5,7 +5,7 @@ from agent.AgentContext import agent_ctx
 
 from service.CustomerService import customer_service
 from agent.actions import init_customer
-
+from service.CustomerService import customer_service
 
 async def get_customer_context(step_ctx: Dict[str, Any]):
     customer_name = step_ctx["find_customer_step"]["customer_name"]
@@ -15,8 +15,8 @@ async def get_customer_context(step_ctx: Dict[str, Any]):
             "submissions": []
         }
         agent_ctx[customer_name] = default_ctx
-        customer_id = await init_customer(customer_name)
-
+        customer = await customer_service.create_customer(customer_name)
+        customer_id = customer.id
         return {
             "new": True,
             "customer_name": customer_name,

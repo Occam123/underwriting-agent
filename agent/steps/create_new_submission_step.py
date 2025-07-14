@@ -19,14 +19,21 @@ async def create_new_submission(customer_id: str, customer_name: str, properties
 
     if new_properties:
 
+        created_properties = []
         case_id = await case_service.create_case(customer_name, customer_id)
+        for property_name in new_properties:
+            property = await property_service.create_building(
+                case_id=case_id,
+                name=property_name
+            )
+            created_properties.append(property)
 
         # create new submission for properties
         new_submission = {
             "email_chain": [],
             "submission_info": {},
             "properties": {
-                property_name: {} for property_name in new_properties
+                property.name: { "id": property.id } for property in created_properties
             }
         }
         agent_ctx[customer_name]["submissions"].append(new_submission)
