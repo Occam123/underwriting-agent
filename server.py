@@ -51,8 +51,6 @@ def read_email():
 @app.route("/email/receive", methods=["POST"])
 def receive_email():
     try:
-        # print("Received email")
-
         email = read_email()
 
         sender = email.get('sender')

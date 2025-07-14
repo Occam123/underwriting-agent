@@ -54,6 +54,7 @@ def create_new_submission_step():
         id="create_new_properties_in_case_step",
         name="Create Properties in Case Step",
         function=lambda step_ctx: create_new_submission(
+            step_ctx["get_customer_context_step"]["customer_id"],
             step_ctx["find_customer_step"]["customer_name"],
             step_ctx["find_relevant_properties_step"]["properties"]
         ),
