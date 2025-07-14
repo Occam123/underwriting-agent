@@ -68,11 +68,13 @@ class Email:
         # Header
         lines = ["################ Email ################"]
         lines.append(f"id: {self.id}")
-        lines.append(f"from: {self.sender_name} {self.sender_email if f'<{self.sender_email}>' else ''}")
-        lines.append(f"to:")
+        lines.append(
+            f"from: {self.sender_name} {f'<{self.sender_email}>' if self.sender_email else ''}"
+        )
+        lines.append("to:")
         for addr in self.receiver_emails:
             lines.append(f"{INDENT}- {addr}")
-        lines.append(f"cc:")
+        lines.append("cc:")
         for addr in self.cc:
             lines.append(f"{INDENT}- {addr}")
         lines.append(f"subject: {self.subject}")
@@ -80,15 +82,20 @@ class Email:
         # Body
         lines.append("body: |")
         lines.append(indent_lines(self.body, level=2))
-        
+
         if dump_attachments:
-            # Attachments
             if self.attachments:
                 lines.append("attachments:")
                 for attachment in self.attachments:
+                    # Start marker for attachment
+                    lines.append(f"{INDENT}# ---- Start attachment: {attachment.filename} ----")
                     lines.append(f"{INDENT}- filename: {attachment.filename}")
                     lines.append(f"{INDENT}  content: |")
                     lines.append(indent_lines(attachment.content, level=3))
+                    # End marker for attachment
+                    lines.append(f"{INDENT}# ---- End attachment: {attachment.filename} ----")
+                    # Blank line separator
+                    lines.append("")
             else:
                 lines.append("attachments: []")
 

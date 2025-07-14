@@ -7,8 +7,6 @@ from helpers import read_system_prompt
 from model.schemas.Properties import Properties
 from model.messageQueue.instance import message_queue
 
-AgentContext = dict
-
 
 def find_properties(full_email_dump: str) -> List[dict]:
     result = llm.chat(

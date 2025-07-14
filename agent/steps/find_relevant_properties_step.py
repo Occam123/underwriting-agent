@@ -8,11 +8,10 @@ from model.schemas.Basic import ListOfStrings
 from model.messageQueue.instance import message_queue
 from helpers import json_dump
 
-AgentContext = dict
 
+def find_relevant_properties(email_dump: Email, properties: List[dict]) -> List[dict]:
+    context = f"============== Email ==============\n{email_dump}\n\n============== Properties ==============\n{json_dump(properties)}"
 
-def find_relevant_properties(email_dump_without_attachments: str, properties: List[dict]) -> List[dict]:
-    context = f"============== Email ==============\n{email_dump_without_attachments}\n\n============== Properties ==============\n{json_dump(properties)}"
     result = llm.chat(
         message=f"Context:\n{context}",
         system_message=read_system_prompt("relevant_properties.md"),
@@ -53,7 +52,7 @@ def find_relevant_properties_step(email: Email):
 
     def result(step_ctx: dict):
         relevant_properties = find_relevant_properties(
-            email_dump_without_attachments=email.dump(dump_attachments=False),
+            email_dump=email.dump(),
             properties=step_ctx["find_properties_step"]["properties"]
         )
         return {

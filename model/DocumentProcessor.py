@@ -11,6 +11,8 @@ from helpers import read_system_prompt
 from exceptions import DocumentProcessorException
 from model.TextRepFile import TextRepFile
 
+from llm.instance import llm
+
 
 class DocumentProcessor:
     def __init__(self):
@@ -185,5 +187,71 @@ class DocumentProcessor:
         if process_function is None:
             raise DocumentProcessorException(
                 f"Unsupported file type: {file_type}")
-        result = process_function(filename, content)
-        return result
+        text_rep_of_doc = process_function(filename, content)
+
+        restructure_documents = False
+
+        if restructure_documents:
+            result = llm.chat(
+                message=text_rep_of_doc.content,
+                system_message="""
+                    You are an AI assistant specialized in structuring file content for insurance underwriting workflows.
+
+    You receive raw, unstructured text representations of documents, which may come from PDFs, Markdown files, Excel (XLSX), CSVs, or other sources.
+
+    Your task:
+
+    Structure this content clearly and accessibly in Markdown format.
+
+    Preserve all original data word-for-word; do not omit, paraphrase, or summarize anything.
+
+    Organize the content for readability:
+
+    Use headings for file names or logical sections.
+
+    Render tables using Markdown table syntax when the content is tabular (from XLSX/CSV, etc.).
+
+    Use code blocks for preserving original formatting or layout (e.g., source code, preformatted text, indented content).
+
+    Clearly indicate file boundaries if multiple files are present (e.g., with “--- Start of [filename] ---” and “--- End of [filename] ---”).
+
+    Do not interpret or analyze the data; only structure and reformat it.
+
+    This is specifically for insurance underwriting, so maintain all policy numbers, clause wordings, schedules, and any formatting as provided.
+
+    Example output for a CSV:
+
+    ### Start of file: schedule.csv  
+    | Policy No | Asset   | Sum Insured | Expiry Date |  
+    |-----------|---------|-------------|-------------|  
+    | 12345     | Office  | 1000000     | 2025-10-01  |  
+    | 67890     | Factory | 5000000     | 2025-09-15  |  
+    ### End of file: schedule.csv  
+    Example output for a PDF (text):
+
+    ### Start of file: Statement_of_Facts.pdf  
+    Statement of Facts  
+    
+    Insured: Acme Corporation  
+    Policy No: 12345  
+    ...  
+    ### End of file: Statement_of_Facts.pdf  
+    Remember:
+
+    Copy everything word for word; do not lose any content or structure.
+
+    Only reformat for clarity and Markdown compatibility.
+
+    Never remove, summarize, or interpret the original data.
+                """,
+                model=Model.gpt_4_1,
+            )
+
+            text_rep_of_doc = TextRepFile(
+                og_type=text_rep_of_doc.og_type,
+                filename=text_rep_of_doc.filename,
+                content=result
+            )
+
+            
+        return text_rep_of_doc

@@ -20,7 +20,7 @@ def read_email():
     """
     Read email from request or cache
     """
-    path = os.path.join("./data", "email2.json")
+    path = os.path.join("./data", "email3.json")
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
     if not os.path.exists(path):
@@ -51,6 +51,8 @@ def read_email():
 @app.route("/email/receive", methods=["POST"])
 def receive_email():
     try:
+        # print("Received email")
+
         email = read_email()
 
         sender = email.get('sender')

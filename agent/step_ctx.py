@@ -1,17 +1,17 @@
 step_ctx = {
     "find_customer_step": {
-        "customer_name": "Alfa Pty Ltd"
+        "customer_name": "[ORGANIZATION_1]"
     },
     "get_customer_context_step": {
         "new": True,
-        "customer_name": "Alfa Pty Ltd",
+        "customer_name": "[ORGANIZATION_1]",
         "customer_ctx": {
             "submissions": [
                 {
                     "email_chain": [],
                     "submission_info": {},
                     "properties": {
-                         "New Crematorium and Memorial Gardens facility in Thornlands": {}
+                        "[LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]": {}
                     }
                 }
             ]
@@ -21,117 +21,94 @@ step_ctx = {
         "properties": [
             {
                 "location_id": 1,
-                "name": "[LOCATION_ADDRESS_STREET_3], Geebung Q [LOCATION_ZIP_3]",
-                "name_insured": "[ORGANIZATION_1] T/A [URL_1] & [ORGANIZATION_2] & [ORGANIZATION_3] & Executive [ORGANIZATION_4] & [ORGANIZATION_5] Funerals & [ORGANIZATION_6], [ORGANIZATION_7], [ORGANIZATION_8], [ORGANIZATION_9] and [ORGANIZATION_10] [ORGANIZATION_11], [ORGANIZATION_12], [NAME_1], [NAME_2] & [NAME_3] and (a) subsidiary companies, organisations and other associated companies as defined under Section 50AAA of the Corporations Act 2001 (Commonwealth), and (b) social and sports clubs *including the committees and officers from time to time of unincorporated bodies) and the trustees of the Insured's superannuation and pension funds and welfare organisations, and (c) all organisations and other entities to whom (whether mortgagees, lessors, joint ventures or other parties with a legal or equitable interest in the Property Insured), the named Insured has a responsibility to maintain insurance; all for their respective interests, rights and liabilities and to the extent that they are not more specifically insured.",
-                "description": "Year Built: 1997. External walls: Concrete. Roof: Metal. Floor: Concrete. Site Description: [ORGANIZATION_23]. Cremator: No. Building Floor Area: Ground Level (Front) \u2013 Offices 288 m2 approximately [LOCATION_ADDRESS_STREET_4] (Front) \u2013 Offices 288 m2 approximately Ground Level (Rear) \u2013 High Bay Warehouse - 674 m2 approximately. Number of levels: two (2) storey Office building with single level a high bay (6.5 metre) warehouse connected at the rear. Cold Room 1: Yes 30sqm. Storage Height: 300. Storage Packaging: 100. EPS%: 10. Internal Insulation: Yes. Fire Protection: Fire hose and extinguishers. Security: Deadlocks, Window security, CCTV, Back to Base Alarm to [ORGANIZATION_24], Security Guard. Buildings sum insured: 5,464,800. Contents: 607,533. Total: 6,072,333."
+                "name": "[LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]",
+                "name_insured": "[ORGANIZATION_1] and/or subsidiary companies, more than half the nominal value of whose equity share capital is owned by the named Insured either directly or through other subsidiaries; and any entity over which an Insured exercises management control and any joint venture partner or company for whom an Insured has responsibility for arranging insurance.",
+                "description": "Aged care facility. Occupancy: aged care facility. The Business: Principally, property owners of aged care facilities including retirement facilities, including all associated activities past or present, and any other incidental occupations or activities incidental thereto. Insured assets: All real and personal property (including money) of every kind and description (except as specifically excluded) belonging to the Insured, or for which the Insured is responsible or has assumed responsibility to insure prior to the occurrence of any loss or destruction or damage, including all such property in which the Insured acquires an insurable interest during the Period of Insurance. Declared Values (site-wide): Section 1 - All Property Insured 31,500,000; Section 2 \u2013 Loss of Rent 2,220,000; Combined Declared Value 33,220,000. Limit of Liability: Combined Single Limit Section 1 and 2 48,100,000. Site-wide cover includes Section 1 - Material Loss or Damage, Section 2 - Consequential Loss. Site-wide sub-limits and policy wordings apply as listed in the policy schedule. No further breakdown or identification of individual buildings or sub-locations has been provided in the source text."
             },
             {
                 "location_id": 2,
-                "name": "[LOCATION_ADDRESS_STREET_5], Geebung Q [LOCATION_ZIP_3]",
-                "name_insured": "[ORGANIZATION_1] T/A [URL_1] & [ORGANIZATION_2] & [ORGANIZATION_3] & Executive [ORGANIZATION_4] & [ORGANIZATION_5] Funerals & [ORGANIZATION_6], [ORGANIZATION_7], [ORGANIZATION_8], [ORGANIZATION_9] and [ORGANIZATION_10] [ORGANIZATION_11], [ORGANIZATION_12], [NAME_1], [NAME_2] & [NAME_3] and (a) subsidiary companies, organisations and other associated companies as defined under Section 50AAA of the Corporations Act 2001 (Commonwealth), and (b) social and sports clubs *including the committees and officers from time to time of unincorporated bodies) and the trustees of the Insured's superannuation and pension funds and welfare organisations, and (c) all organisations and other entities to whom (whether mortgagees, lessors, joint ventures or other parties with a legal or equitable interest in the Property Insured), the named Insured has a responsibility to maintain insurance; all for their respective interests, rights and liabilities and to the extent that they are not more specifically insured.",
-                "description": "Year Built: 2000. External walls: Concrete. Roof: Metal. Floor: Concrete. Site Description: Garage. Cremator: No. Building Floor Area: Approx 100sqm. Number of levels: Single. Cold Room 1: No. Storage Height: 100. Storage Packaging: 200. EPS%: 6. Internal Insulation: No. Fire Protection: Extinguishers. Buildings sum insured: 0. Contents: 5,000. Total: 5,000."
-            },
-            {
-                "location_id": 3,
-                "name": "[LOCATION_ADDRESS_STREET_6], Deception Bay Q [LOCATION_ZIP_4]",
-                "name_insured": "[ORGANIZATION_1] T/A [URL_1] & [ORGANIZATION_2] & [ORGANIZATION_3] & Executive [ORGANIZATION_4] & [ORGANIZATION_5] Funerals & [ORGANIZATION_6], [ORGANIZATION_7], [ORGANIZATION_8], [ORGANIZATION_9] and [ORGANIZATION_10] [ORGANIZATION_11], [ORGANIZATION_12], [NAME_1], [NAME_2] & [NAME_3] and (a) subsidiary companies, organisations and other associated companies as defined under Section 50AAA of the Corporations Act 2001 (Commonwealth), and (b) social and sports clubs *including the committees and officers from time to time of unincorporated bodies) and the trustees of the Insured's superannuation and pension funds and welfare organisations, and (c) all organisations and other entities to whom (whether mortgagees, lessors, joint ventures or other parties with a legal or equitable interest in the Property Insured), the named Insured has a responsibility to maintain insurance; all for their respective interests, rights and liabilities and to the extent that they are not more specifically insured.",
-                "description": "Year Built: 1990. External walls: [NAME_GIVEN_2]rick. Roof: Metal. Floor: Concrete. Site Description: Crematorium and Memorial Gardens. Cremator: Yes. Building Floor Area: Approx 488sqm. Number of levels: Single. Cold Room 1: Yes 9 Sqm. Storage Height: 300. Storage Packaging: 100. EPS%: 7. Internal Insulation: No. Fire Protection: Fire hose and extinguishers. Security: Deadlocks, Ram raid barriers, CCTV, Back to Base Alarm. Buildings sum insured: 4,989,600. Contents: 613,319. Total: 5,602,919."
-            },
-            {
-                "location_id": 4,
-                "name": "[LOCATION_ADDRESS_STREET_7], Northgate Q [LOCATION_ZIP_5]",
-                "name_insured": "[ORGANIZATION_1] T/A [URL_1] & [ORGANIZATION_2] & [ORGANIZATION_3] & Executive [ORGANIZATION_4] & [ORGANIZATION_5] Funerals & [ORGANIZATION_6], [ORGANIZATION_7], [ORGANIZATION_8], [ORGANIZATION_9] and [ORGANIZATION_10] [ORGANIZATION_11], [ORGANIZATION_12], [NAME_1], [NAME_2] & [NAME_3] and (a) subsidiary companies, organisations and other associated companies as defined under Section 50AAA of the Corporations Act 2001 (Commonwealth), and (b) social and sports clubs *including the committees and officers from time to time of unincorporated bodies) and the trustees of the Insured's superannuation and pension funds and welfare organisations, and (c) all organisations and other entities to whom (whether mortgagees, lessors, joint ventures or other parties with a legal or equitable interest in the Property Insured), the named Insured has a responsibility to maintain insurance; all for their respective interests, rights and liabilities and to the extent that they are not more specifically insured.",
-                "description": "Year Built: 1975. External walls: Metal. Roof: Metal. Floor: Concrete. Site Description: Garage. Cremator: No. Building Floor Area: 800sqm. Number of levels: Single. Cold Room 1: No. Storage Height: 100. Storage Packaging: 200. EPS%: 8. Internal Insulation: No. Fire Protection: Extinguishers. Buildings sum insured: 1,133,000. Contents: 21,400. Total: 1,154,400."
-            },
-            {
-                "location_id": 5,
-                "name": "[LOCATION_ADDRESS_STREET_8], Browns Plains Q [LOCATION_ZIP_6]",
-                "name_insured": "[ORGANIZATION_1] T/A [URL_1] & [ORGANIZATION_2] & [ORGANIZATION_3] & Executive [ORGANIZATION_4] & [ORGANIZATION_5] Funerals & [ORGANIZATION_6], [ORGANIZATION_7], [ORGANIZATION_8], [ORGANIZATION_9] and [ORGANIZATION_10] [ORGANIZATION_11], [ORGANIZATION_12], [NAME_1], [NAME_2] & [NAME_3] and (a) subsidiary companies, organisations and other associated companies as defined under Section 50AAA of the Corporations Act 2001 (Commonwealth), and (b) social and sports clubs *including the committees and officers from time to time of unincorporated bodies) and the trustees of the Insured's superannuation and pension funds and welfare organisations, and (c) all organisations and other entities to whom (whether mortgagees, lessors, joint ventures or other parties with a legal or equitable interest in the Property Insured), the named Insured has a responsibility to maintain insurance; all for their respective interests, rights and liabilities and to the extent that they are not more specifically insured.",
-                "description": "Year Built: 1990. External walls: Concrete. Roof: Metal. Floor: Concrete. Site Description: Office. Cremator: No. Building Floor Area: 40sqm. Number of levels: Single. Cold Room 1: No. Storage Height: 300. Storage Packaging: 100. EPS%: 18. Internal Insulation: No. Fire Protection: Fire hose and extinguishers. Security: Monitored back to base security alarm. Buildings sum insured: 0. Contents: 26,616. Total: 26,616."
-            },
-            {
-                "location_id": 6,
-                "name": "[LOCATION_ADDRESS_STREET_9], Thornlands Q [LOCATION_ZIP_7]",
-                "name_insured": "[ORGANIZATION_1] T/A [URL_1] & [ORGANIZATION_2] & [ORGANIZATION_3] & Executive [ORGANIZATION_4] & [ORGANIZATION_5] Funerals & [ORGANIZATION_6], [ORGANIZATION_7], [ORGANIZATION_8], [ORGANIZATION_9] and [ORGANIZATION_10] [ORGANIZATION_11], [ORGANIZATION_12], [NAME_1], [NAME_2] & [NAME_3] and (a) subsidiary companies, organisations and other associated companies as defined under Section 50AAA of the Corporations Act 2001 (Commonwealth), and (b) social and sports clubs *including the committees and officers from time to time of unincorporated bodies) and the trustees of the Insured's superannuation and pension funds and welfare organisations, and (c) all organisations and other entities to whom (whether mortgagees, lessors, joint ventures or other parties with a legal or equitable interest in the Property Insured), the named Insured has a responsibility to maintain insurance; all for their respective interests, rights and liabilities and to the extent that they are not more specifically insured.",
-                "description": "Year Built: 1975. External walls: Timber. Roof: Metal. Floor: Timber. Site Description: Rental House. Building Floor Area: Land 26 Acres. Storage Height: 300. Storage Packaging: 100. EPS%: 10. Internal Insulation: No. Buildings sum insured: 300,000. Contents: not declared. Total: 300,000."
-            },
-            {
-                "location_id": 7,
-                "name": "New Crematorium and Memorial Gardens facility in Thornlands",
-                "name_insured": "[ORGANIZATION_1] T/A [URL_1] & [ORGANIZATION_2] & [ORGANIZATION_3] & Executive [ORGANIZATION_4] & [ORGANIZATION_5] Funerals & [ORGANIZATION_6], [ORGANIZATION_7], [ORGANIZATION_8], [ORGANIZATION_9] and [ORGANIZATION_10] [ORGANIZATION_11], [ORGANIZATION_12], [NAME_1], [NAME_2] & [NAME_3] and (a) subsidiary companies, organisations and other associated companies as defined under Section 50AAA of the Corporations Act 2001 (Commonwealth), and (b) social and sports clubs *including the committees and officers from time to time of unincorporated bodies) and the trustees of the Insured's superannuation and pension funds and welfare organisations, and (c) all organisations and other entities to whom (whether mortgagees, lessors, joint ventures or other parties with a legal or equitable interest in the Property Insured), the named Insured has a responsibility to maintain insurance; all for their respective interests, rights and liabilities and to the extent that they are not more specifically insured.",
-                "description": "New Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time. Asset value approximately $10 million."
+                "name": "anywhere in Australia (including contract sites) where the Insured has property or carries on business, has goods or other property stored or being processed or has work done",
+                "name_insured": "[ORGANIZATION_1] and/or subsidiary companies, more than half the nominal value of whose equity share capital is owned by the named Insured either directly or through other subsidiaries; and any entity over which an Insured exercises management control and any joint venture partner or company for whom an Insured has responsibility for arranging insurance.",
+                "description": "Site-wide and contract site cover provided across Australia where the Insured has property or carries on business, has goods or other property stored or being processed or has work done (including but not limited to the primary situation at [LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]). Insured assets: All real and personal property (including money) of every kind and description (except as specifically excluded) belonging to the Insured, or for which the Insured is responsible or has assumed responsibility to insure prior to the occurrence of any loss or destruction or damage, including all such property in which the Insured acquires an insurable interest during the Period of Insurance. Policy coverage and sub-limits (including those described as site-wide in the schedule) apply at any such location."
             }
         ]
     },
     "find_relevant_properties_step": {
         "properties": [
             {
-                "location_id": 7,
-                "name": "New Crematorium and Memorial Gardens facility in Thornlands",
-                "name_insured": "[ORGANIZATION_1] T/A [URL_1] & [ORGANIZATION_2] & [ORGANIZATION_3] & Executive [ORGANIZATION_4] & [ORGANIZATION_5] Funerals & [ORGANIZATION_6], [ORGANIZATION_7], [ORGANIZATION_8], [ORGANIZATION_9] and [ORGANIZATION_10] [ORGANIZATION_11], [ORGANIZATION_12], [NAME_1], [NAME_2] & [NAME_3] and (a) subsidiary companies, organisations and other associated companies as defined under Section 50AAA of the Corporations Act 2001 (Commonwealth), and (b) social and sports clubs *including the committees and officers from time to time of unincorporated bodies) and the trustees of the Insured's superannuation and pension funds and welfare organisations, and (c) all organisations and other entities to whom (whether mortgagees, lessors, joint ventures or other parties with a legal or equitable interest in the Property Insured), the named Insured has a responsibility to maintain insurance; all for their respective interests, rights and liabilities and to the extent that they are not more specifically insured.",
-                "description": "New Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time. Asset value approximately $10 million."
+                "location_id": 1,
+                "name": "[LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]",
+                "name_insured": "[ORGANIZATION_1] and/or subsidiary companies, more than half the nominal value of whose equity share capital is owned by the named Insured either directly or through other subsidiaries; and any entity over which an Insured exercises management control and any joint venture partner or company for whom an Insured has responsibility for arranging insurance.",
+                "description": "Aged care facility. Occupancy: aged care facility. The Business: Principally, property owners of aged care facilities including retirement facilities, including all associated activities past or present, and any other incidental occupations or activities incidental thereto. Insured assets: All real and personal property (including money) of every kind and description (except as specifically excluded) belonging to the Insured, or for which the Insured is responsible or has assumed responsibility to insure prior to the occurrence of any loss or destruction or damage, including all such property in which the Insured acquires an insurable interest during the Period of Insurance. Declared Values (site-wide): Section 1 - All Property Insured 31,500,000; Section 2 \u2013 Loss of Rent 2,220,000; Combined Declared Value 33,220,000. Limit of Liability: Combined Single Limit Section 1 and 2 48,100,000. Site-wide cover includes Section 1 - Material Loss or Damage, Section 2 - Consequential Loss. Site-wide sub-limits and policy wordings apply as listed in the policy schedule. No further breakdown or identification of individual buildings or sub-locations has been provided in the source text."
             }
-        ]
+        ],
+        "summary": None
     },
     "create_new_properties_in_case_step": {
         "new_properties": [
-            "New Crematorium and Memorial Gardens facility in Thornlands"
+            "[LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]"
         ]
     },
     "find_submission_wide_information_step": {
         "submission_info": {
-            "quotation_date": "02/08/2024",
-            "inception_date": "15/08/2024"
+            "quotation_date": {
+                "value": "13/07/2025",
+                "source": "Verzonden: zondag 13 juli 2025 13:37\nAan: agent@sandboxff7d39e85317487d80365a97016fa68a.mailgun.org <agent@sandboxff7d39e85317487d80365a97016fa68a.mailgun.org>\nOnderwerp: [EXTERNAL] New Submission: [ORGANIZATION_1]\n\nHi [NAME_GIVEN_3],\n\nPlease see attached new quote slip for [ORGANIZATION_1]."
+            },
+            "inception_date": {
+                "value": "31/12/2024",
+                "source": "PERIOD OF INSURANCE:\nFrom:\n4.00pm 31 December 2024\nTo:\n4.00pm 31 December 2025\nBoth local standard time at the Insured\u2019s head office."
+            }
         }
     },
     "extract_structured_data_per_property_step": {
         "structured_data_per_property": {
-            "New Crematorium and Memorial Gardens facility in Thornlands": {
+            "[LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]": {
                 "total_declared_value": {
-                    "value": 10000000.0,
-                    "source": "There is a new Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time. This facility will have an asset value of approximately $10 million."
+                    "value": 33220000.0,
+                    "source": "Combined Declared Value 33,220,000"
                 },
                 "address": {
                     "street": {
-                        "value": None,
-                        "source": ""
+                        "value": "[LOCATION_ADDRESS_STREET_2]",
+                        "source": "SITUATION AND/OR PREMISES: [LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]"
                     },
                     "number": {
-                        "value": None,
+                        "value": "",
                         "source": ""
                     },
                     "postal_code": {
-                        "value": None,
-                        "source": ""
+                        "value": "[LOCATION_ZIP_2]",
+                        "source": "SITUATION AND/OR PREMISES: [LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]"
                     },
                     "city": {
-                        "value": "Thornlands",
-                        "source": "New Crematorium and Memorial Gardens facility in Thornlands"
+                        "value": "Epping",
+                        "source": "SITUATION AND/OR PREMISES: [LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]"
                     },
                     "province": {
-                        "value": "Queensland",
-                        "source": "South Brisbane, Queensland, [LOCATION_ZIP_1]"
+                        "value": "VIC",
+                        "source": "SITUATION AND/OR PREMISES: [LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]"
                     },
                     "country": {
                         "value": "Australia",
-                        "source": "any other situation/premises in Australia owned or occupied by the Insured for the purposes of the Business"
+                        "source": "SITUATION AND/OR PREMISES: [LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]\nand anywhere in Australia (including contract sites) where the Insured has property or carries on business"
                     },
                     "unit": {
                         "value": None,
                         "source": ""
                     },
                     "property_name": {
-                        "value": "New Crematorium and Memorial Gardens facility in Thornlands",
-                        "source": "Property name: \"New Crematorium and Memorial Gardens facility in Thornlands\""
+                        "value": "[LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]",
+                        "source": "Property name: \"[LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]\""
                     }
                 },
                 "business_description": {
-                    "value": "Funeral Directors, Property Owners and any activity incidental thereto.",
-                    "source": "Principally Funeral Directors, Property Owners and any activity incidental thereto."
+                    "value": "Principally, property owners of aged care facilities including retirement facilities, including all associated activities past or present, and any other incidental occupations or activities incidental thereto.",
+                    "source": "THE BUSINESS: Principally, property owners of aged care facilities including retirement facilities, including all associated activities past or present, and any other incidental occupations or activities incidental thereto."
                 },
                 "property_description": {
-                    "value": "New Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time.",
-                    "source": "New Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time."
+                    "value": "Aged care facility. Occupancy: aged care facility.",
+                    "source": "Property description: \"Aged care facility. Occupancy: aged care facility.\""
                 },
                 "construction_materials": {
                     "wood": {
@@ -176,8 +153,8 @@ step_ctx = {
                     }
                 },
                 "purpose_built_premises": {
-                    "value": True,
-                    "source": "New Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time."
+                    "value": None,
+                    "source": ""
                 },
                 "established_and_financially_stable": {
                     "value": None,
@@ -193,63 +170,69 @@ step_ctx = {
                 },
                 "industry_type": {
                     "main_category": "real_estate_and_business_services",
-                    "sub_category": "clerical_technical_and_business_services"
+                    "sub_category": "community_and_aged_care_facilities"
                 }
             }
         }
     },
     "aggregate_data_step": {
         "submission_info": {
-            "quotation_date": "02/08/2024",
-            "inception_date": "15/08/2024"
+            "quotation_date": {
+                "value": "13/07/2025",
+                "source": "Verzonden: zondag 13 juli 2025 13:37\nAan: agent@sandboxff7d39e85317487d80365a97016fa68a.mailgun.org <agent@sandboxff7d39e85317487d80365a97016fa68a.mailgun.org>\nOnderwerp: [EXTERNAL] New Submission: [ORGANIZATION_1]\n\nHi [NAME_GIVEN_3],\n\nPlease see attached new quote slip for [ORGANIZATION_1]."
+            },
+            "inception_date": {
+                "value": "31/12/2024",
+                "source": "PERIOD OF INSURANCE:\nFrom:\n4.00pm 31 December 2024\nTo:\n4.00pm 31 December 2025\nBoth local standard time at the Insured\u2019s head office."
+            }
         },
         "structured_data_per_property": {
-            "New Crematorium and Memorial Gardens facility in Thornlands": {
+            "[LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]": {
                 "total_declared_value": {
-                    "value": 10000000.0,
-                    "source": "There is a new Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time. This facility will have an asset value of approximately $10 million."
+                    "value": 33220000.0,
+                    "source": "Combined Declared Value 33,220,000"
                 },
                 "address": {
                     "street": {
-                        "value": None,
-                        "source": ""
+                        "value": "[LOCATION_ADDRESS_STREET_2]",
+                        "source": "SITUATION AND/OR PREMISES: [LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]"
                     },
                     "number": {
-                        "value": None,
+                        "value": "",
                         "source": ""
                     },
                     "postal_code": {
-                        "value": None,
-                        "source": ""
+                        "value": "[LOCATION_ZIP_2]",
+                        "source": "SITUATION AND/OR PREMISES: [LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]"
                     },
                     "city": {
-                        "value": "Thornlands",
-                        "source": "New Crematorium and Memorial Gardens facility in Thornlands"
+                        "value": "Epping",
+                        "source": "SITUATION AND/OR PREMISES: [LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]"
                     },
                     "province": {
-                        "value": "Queensland",
-                        "source": "South Brisbane, Queensland, [LOCATION_ZIP_1]"
+                        "value": "VIC",
+                        "source": "SITUATION AND/OR PREMISES: [LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]"
                     },
                     "country": {
                         "value": "Australia",
-                        "source": "any other situation/premises in Australia owned or occupied by the Insured for the purposes of the Business"
+                        "source": "SITUATION AND/OR PREMISES: [LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]\nand anywhere in Australia (including contract sites) where the Insured has property or carries on business"
                     },
                     "unit": {
                         "value": None,
                         "source": ""
                     },
                     "property_name": {
-                        "value": "New Crematorium and Memorial Gardens facility in Thornlands",
-                        "source": "Property name: \"New Crematorium and Memorial Gardens facility in Thornlands\""
+                        "value": "[LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]",
+                        "source": "Property name: \"[LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]\""
                     }
                 },
                 "business_description": {
-                    "value": "Funeral Directors, Property Owners and any activity incidental thereto.",
-                    "source": "Principally Funeral Directors, Property Owners and any activity incidental thereto."
+                    "value": "Principally, property owners of aged care facilities including retirement facilities, including all associated activities past or present, and any other incidental occupations or activities incidental thereto.",
+                    "source": "THE BUSINESS: Principally, property owners of aged care facilities including retirement facilities, including all associated activities past or present, and any other incidental occupations or activities incidental thereto."
                 },
                 "property_description": {
-                    "value": "New Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time.",
-                    "source": "New Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time."
+                    "value": "Aged care facility. Occupancy: aged care facility.",
+                    "source": "Property description: \"Aged care facility. Occupancy: aged care facility.\""
                 },
                 "construction_materials": {
                     "wood": {
@@ -294,8 +277,8 @@ step_ctx = {
                     }
                 },
                 "purpose_built_premises": {
-                    "value": True,
-                    "source": "New Crematorium and Memorial Gardens facility in Thornlands, scheduled for completion in a few months\u2019 time."
+                    "value": None,
+                    "source": ""
                 },
                 "established_and_financially_stable": {
                     "value": None,
@@ -311,9 +294,156 @@ step_ctx = {
                 },
                 "industry_type": {
                     "main_category": "real_estate_and_business_services",
-                    "sub_category": "clerical_technical_and_business_services"
+                    "sub_category": "community_and_aged_care_facilities"
                 }
             }
         }
+    },
+    "clean_data_step": {
+        "submission_info": {
+            "quotation_date": {
+                "value": "13/07/2025",
+                "source": "Verzonden: zondag 13 juli 2025 13:37\nAan: agent@sandboxff7d39e85317487d80365a97016fa68a.mailgun.org <agent@sandboxff7d39e85317487d80365a97016fa68a.mailgun.org>\nOnderwerp: [EXTERNAL] New Submission: [ORGANIZATION_1]\n\nHi [NAME_GIVEN_3],\n\nPlease see attached new quote slip for [ORGANIZATION_1]."
+            },
+            "inception_date": {
+                "value": "31/12/2024",
+                "source": "PERIOD OF INSURANCE:\nFrom:\n4.00pm 31 December 2024\nTo:\n4.00pm 31 December 2025\nBoth local standard time at the Insured\u2019s head office."
+            }
+        },
+        "structured_data_per_property": {
+            "[LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]": {
+                "total_declared_value": {
+                    "value": 33220000.0,
+                    "source": "Combined Declared Value 33,220,000"
+                },
+                "address": {
+                    "street": {
+                        "value": "[LOCATION_ADDRESS_STREET_2]",
+                        "source": "SITUATION AND/OR PREMISES: [LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]"
+                    },
+                    "number": {
+                        "value": None,
+                        "source": None
+                    },
+                    "postal_code": {
+                        "value": "[LOCATION_ZIP_2]",
+                        "source": "SITUATION AND/OR PREMISES: [LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]"
+                    },
+                    "city": {
+                        "value": "Epping",
+                        "source": "SITUATION AND/OR PREMISES: [LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]"
+                    },
+                    "province": {
+                        "value": "VIC",
+                        "source": "SITUATION AND/OR PREMISES: [LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]"
+                    },
+                    "country": {
+                        "value": "Australia",
+                        "source": "SITUATION AND/OR PREMISES: [LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]\nand anywhere in Australia (including contract sites) where the Insured has property or carries on business"
+                    },
+                    "unit": {
+                        "value": None,
+                        "source": None
+                    },
+                    "property_name": {
+                        "value": "[LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]",
+                        "source": "Property name: \"[LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]\""
+                    }
+                },
+                "business_description": {
+                    "value": "Principally, property owners of aged care facilities including retirement facilities, including all associated activities past or present, and any other incidental occupations or activities incidental thereto.",
+                    "source": "THE BUSINESS: Principally, property owners of aged care facilities including retirement facilities, including all associated activities past or present, and any other incidental occupations or activities incidental thereto."
+                },
+                "property_description": {
+                    "value": "Aged care facility. Occupancy: aged care facility.",
+                    "source": "Property description: \"Aged care facility. Occupancy: aged care facility.\""
+                },
+                "construction_materials": {
+                    "wood": {
+                        "value": False,
+                        "source": "Updated in process config"
+                    },
+                    "steel": {
+                        "value": None,
+                        "source": None
+                    },
+                    "brick": {
+                        "value": None,
+                        "source": None
+                    }
+                },
+                "location_risk": {
+                    "flood_zone": {
+                        "value": None,
+                        "source": None
+                    },
+                    "earthquake_prone_area": {
+                        "value": None,
+                        "source": None
+                    },
+                    "windstorm_area": {
+                        "value": None,
+                        "source": None
+                    }
+                },
+                "fire_protection": {
+                    "sprinklers": {
+                        "value": None,
+                        "source": None
+                    },
+                    "alarms": {
+                        "value": None,
+                        "source": None
+                    },
+                    "fire_department_proximity": {
+                        "value": None,
+                        "source": None
+                    }
+                },
+                "purpose_built_premises": {
+                    "value": None,
+                    "source": None
+                },
+                "established_and_financially_stable": {
+                    "value": None,
+                    "source": None
+                },
+                "proactively_risk_managed_and_tested_BCP": {
+                    "value": None,
+                    "source": None
+                },
+                "engaged_in_the_legal_and_regulatory_landscape_of_their_markets": {
+                    "value": None,
+                    "source": None
+                },
+                "industry_type": {
+                    "main_category": "real_estate_and_business_services",
+                    "sub_category": "community_and_aged_care_facilities"
+                }
+            }
+        }
+    },
+    "apply_appetite_matrix_step": {
+        "appetite_evaluation": {
+            "in_appetite_properties": [],
+            "out_of_appetite_properties": [
+                {
+                    "name": "[LOCATION_ADDRESS_STREET_2], Epping VIC [LOCATION_ZIP_2]",
+                    "reason": [
+                        0,
+                        1,
+                        4
+                    ]
+                }
+            ]
+        }
+    },
+    "check_quick_decline_rules_data": {
+        "missing_values": []
+    },
+    "apply_quick_decline_rules_step": {
+        "decline_reasons": [
+            "Decline: The policy inception date is before the quote date."
+        ]
     }
 }
